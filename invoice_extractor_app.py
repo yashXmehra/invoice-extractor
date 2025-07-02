@@ -232,7 +232,7 @@ def process_pdf_ultra_parallel(pdf_data):
 # ---------- MAIN LOGIC ---------- #
 if uploaded_files:
     st.markdown("---")
-    st.subheader("🚀 Ultra Parallel Processing Mode")
+    st.subheader("🚀Processing Mode")
     
     # Display current settings
     col1, col2, col3, col4 = st.columns(4)
@@ -292,7 +292,7 @@ if uploaded_files:
         st.success(f"✅ Prepared {len(pdf_data_list)} files with {total_pages_all} total pages")
         
         # Ultra parallel processing
-        st.info(f"🚀 Starting ultra parallel processing of {len(pdf_data_list)} files...")
+        st.info(f"🚀 Starting processing of {len(pdf_data_list)} files...")
         
         start_time = time.time()
         all_results = []
@@ -305,7 +305,7 @@ if uploaded_files:
             }
             
             completed_files = 0
-            main_progress = st.progress(0, text="Processing all files in ultra parallel mode...")
+            main_progress = st.progress(0, text="Processing all files in parallel mode...")
             
             for future in as_completed(future_to_pdf):
                 filename = future_to_pdf[future]
@@ -329,7 +329,7 @@ if uploaded_files:
         
         if all_results:
             st.markdown("---")
-            st.subheader("🎯 Ultra Parallel Results")
+            st.subheader("🎯 Parallel Results")
             
             # Performance metrics
             pages_per_second = total_pages_all / total_time if total_time > 0 else 0
@@ -379,7 +379,7 @@ if uploaded_files:
             st.warning("⚠️ No data was extracted from any files")
 
 else:
-    st.info("📁 Upload PDF or Image files to begin ultra parallel extraction")
+    st.info("📁 Upload PDF or Image files to begin extraction")
     # st.markdown("""
     # ### 🚀 Ultra Parallel Processing Capabilities:
     
