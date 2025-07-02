@@ -1,0 +1,25 @@
+# API Keys - KEEP SECRETS SAFE!
+*.json
+KEY.json
+secrets.toml
+.streamlit/secrets.toml
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual Environment
+venv/
+env/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+
+# Temporary files
+*.tmp
+*.log
