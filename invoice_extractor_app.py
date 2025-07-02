@@ -40,52 +40,52 @@ st.markdown(hide_github_options, unsafe_allow_html=True)
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 st.set_page_config(page_title="Invoice Extractor", layout="wide", initial_sidebar_state="expanded")
-st.title("📄 Invoice Extractor (PDF/Image to Structured CSV)")
+st.title("📄 Invoice Extractor")
 
-# Advanced Sidebar Configuration
-st.sidebar.header("🎛️ Parallel Settings")
+# Configuration Settings
+st.sidebar.header("⚙️ Configuration")
 
 # File-level parallelism
 pdf_workers = st.sidebar.slider(
-    "PDF Workers (Files in Parallel)", 
+    "Concurrent Files", 
     min_value=1, max_value=20, value=10,
-    help="Number of PDF files processed simultaneously"
+    help="Number of files processed simultaneously"
 )
 
 # Page-level parallelism within each PDF
 page_workers = st.sidebar.slider(
-    "Page Workers (Pages per PDF)", 
+    "Pages per File", 
     min_value=1, max_value=30, value=20,
-    help="Number of pages processed simultaneously within each PDF"
+    help="Number of pages processed simultaneously per file"
 )
 
 # Batch settings
 batch_size = st.sidebar.slider(
     "Batch Size", 
     min_value=10, max_value=100, value=50,
-    help="Pages per batch (larger batches = fewer API limit issues)"
+    help="Number of pages processed per batch"
 )
 
 batch_workers = st.sidebar.slider(
-    "Batch Workers (Batches in Parallel)", 
+    "Concurrent Batches", 
     min_value=1, max_value=5, value=2,
-    help="Number of batches processed simultaneously per PDF"
+    help="Number of batches processed simultaneously per file"
 )
 
 # Rate limiting
 delay_between_calls = st.sidebar.slider(
-    "API Call Delay (seconds)", 
+    "API Delay (seconds)", 
     min_value=0.0, max_value=1.0, value=0.1, step=0.05,
-    help="Delay between API calls to avoid rate limiting"
+    help="Delay between API calls to manage rate limits"
 )
 
 # Max API calls estimation
 max_concurrent_calls = pdf_workers * page_workers * batch_workers
-st.sidebar.warning(f"⚠️ Max concurrent API calls: ~{max_concurrent_calls}")
-st.sidebar.info("💡 Reduce workers if you hit rate limits")
+st.sidebar.warning(f"⚠️ Estimated concurrent API calls: {max_concurrent_calls}")
+st.sidebar.info("💡 Adjust settings if rate limits are exceeded")
 
 uploaded_files = st.file_uploader(
-    "Upload up to 50 PDF/Image files",
+    "Upload PDF and image files",
     type=["pdf", "png", "jpg", "jpeg"],
     accept_multiple_files=True
 )
@@ -112,7 +112,6 @@ def call_gpt4_vision_with_retry(image_base64, filename, page_number, max_retries
     """Call GPT-4 Vision with retry logic and rate limiting"""
     for attempt in range(max_retries):
         try:
-            # Add delay for rate limiting
             time.sleep(delay_between_calls)
             
             response = openai.chat.completions.create(
@@ -143,12 +142,12 @@ def call_gpt4_vision_with_retry(image_base64, filename, page_number, max_retries
             
         except Exception as e:
             if attempt == max_retries - 1:
-                return []  # Fail silently to avoid spam
-            time.sleep(0.5 * (attempt + 1))  # Exponential backoff
+                return []
+            time.sleep(0.5 * (attempt + 1))
     return []
 
 def process_single_page(args):
-    """Process a single page - wrapper for parallel execution"""
+    """Process a single page"""
     image_base64, filename, page_number = args
     return call_gpt4_vision_with_retry(image_base64, filename, page_number)
 
@@ -169,11 +168,11 @@ def extract_pdf_pages(pdf_file, filename):
         pdf_doc.close()
         return pages_data, total_pages
     except Exception as e:
-        st.error(f"❌ Error extracting pages from {filename}: {e}")
+        st.error(f"Error extracting pages from {filename}: {e}")
         return [], 0
 
-def process_batch_ultra_parallel(batch_pages, batch_info, page_workers):
-    """Process a single batch with multiple workers"""
+def process_batch(batch_pages, batch_info, page_workers):
+    """Process a batch of pages"""
     batch_results = []
     
     with ThreadPoolExecutor(max_workers=page_workers) as executor:
@@ -185,14 +184,12 @@ def process_batch_ultra_parallel(batch_pages, batch_info, page_workers):
                 result = future.result()
                 batch_results.extend(result)
             except Exception as e:
-                page_data = future_to_page[future]
-                # Silent error handling to avoid UI spam
                 pass
     
     return batch_results, batch_info
 
-def process_pdf_ultra_parallel(pdf_data):
-    """Process a single PDF with multiple batches running in parallel"""
+def process_pdf(pdf_data):
+    """Process a single PDF file"""
     pages_data, filename, total_pages = pdf_data
     
     if not pages_data:
@@ -210,12 +207,12 @@ def process_pdf_ultra_parallel(pdf_data):
         }
         batches.append((batch_pages, batch_info))
     
-    # Process batches in parallel
+    # Process batches
     all_results = []
     
     with ThreadPoolExecutor(max_workers=batch_workers) as executor:
         future_to_batch = {
-            executor.submit(process_batch_ultra_parallel, batch_pages, batch_info, page_workers): batch_info
+            executor.submit(process_batch, batch_pages, batch_info, page_workers): batch_info
             for batch_pages, batch_info in batches
         }
         
@@ -224,7 +221,6 @@ def process_pdf_ultra_parallel(pdf_data):
                 batch_results, batch_info = future.result()
                 all_results.extend(batch_results)
             except Exception as e:
-                # Silent error handling
                 pass
     
     return all_results
@@ -232,37 +228,37 @@ def process_pdf_ultra_parallel(pdf_data):
 # ---------- MAIN LOGIC ---------- #
 if uploaded_files:
     st.markdown("---")
-    st.subheader("🚀Processing Mode")
+    st.subheader("Processing Configuration")
     
     # Display current settings
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("PDF Workers", pdf_workers, help="Files processed simultaneously")
+        st.metric("Concurrent Files", pdf_workers)
     with col2:
-        st.metric("Page Workers", page_workers, help="Pages per PDF simultaneously")
+        st.metric("Pages per File", page_workers)
     with col3:
-        st.metric("Batch Workers", batch_workers, help="Batches per PDF simultaneously")
+        st.metric("Concurrent Batches", batch_workers)
     with col4:
-        st.metric("Batch Size", batch_size, help="Pages per batch")
+        st.metric("Batch Size", batch_size)
     
     # Processing info
     st.info(f"""
-    🎯 **Processing Strategy**:
-    • {pdf_workers} PDFs processed simultaneously
-    • Within each PDF: {page_workers} pages processed simultaneously  
-    • {batch_workers} batches per PDF run in parallel
+    **Processing Configuration**:
+    • {pdf_workers} files will be processed simultaneously
+    • {page_workers} pages per file will be processed concurrently
+    • {batch_workers} batches per file will run in parallel
     • Each batch contains up to {batch_size} pages
-    • Max concurrent API calls: ~{max_concurrent_calls}
+    • Estimated concurrent API calls: {max_concurrent_calls}
     """)
     
     total_files = len(uploaded_files)
     
-    # Prepare all PDF data first
+    # Prepare all files
     pdf_data_list = []
     total_pages_all = 0
     
-    st.info("📄 Preparing all PDF files...")
-    prep_progress = st.progress(0, text="Extracting pages from all PDFs...")
+    st.info("Preparing files for processing...")
+    prep_progress = st.progress(0, text="Analyzing uploaded files...")
     
     for i, uploaded_file in enumerate(uploaded_files):
         file_ext = uploaded_file.name.lower().split(".")[-1]
@@ -279,33 +275,33 @@ if uploaded_files:
                 pdf_data_list.append([[(img_b64, uploaded_file.name, 1)], uploaded_file.name, 1])
                 total_pages_all += 1
             except Exception as e:
-                st.error(f"❌ Error processing image {uploaded_file.name}: {e}")
+                st.error(f"Error processing image {uploaded_file.name}: {e}")
         
         prep_progress.progress((i + 1) / total_files, 
-                              text=f"Prepared {i + 1}/{total_files} files")
+                              text=f"Analyzed {i + 1}/{total_files} files")
     
     prep_progress.empty()
     
     if not pdf_data_list:
-        st.error("❌ No valid files to process")
+        st.error("No valid files to process")
     else:
-        st.success(f"✅ Prepared {len(pdf_data_list)} files with {total_pages_all} total pages")
+        st.success(f"Ready to process {len(pdf_data_list)} files containing {total_pages_all} total pages")
         
-        # Ultra parallel processing
-        st.info(f"🚀 Starting processing of {len(pdf_data_list)} files...")
+        # Processing
+        st.info(f"Processing {len(pdf_data_list)} files...")
         
         start_time = time.time()
         all_results = []
         
-        # Process multiple PDFs simultaneously
+        # Process files
         with ThreadPoolExecutor(max_workers=pdf_workers) as executor:
             future_to_pdf = {
-                executor.submit(process_pdf_ultra_parallel, pdf_data): pdf_data[1]
+                executor.submit(process_pdf, pdf_data): pdf_data[1]
                 for pdf_data in pdf_data_list
             }
             
             completed_files = 0
-            main_progress = st.progress(0, text="Processing all files in parallel mode...")
+            main_progress = st.progress(0, text="Processing files...")
             
             for future in as_completed(future_to_pdf):
                 filename = future_to_pdf[future]
@@ -317,89 +313,82 @@ if uploaded_files:
                     main_progress.progress(completed_files / len(pdf_data_list),
                                          text=f"Completed {completed_files}/{len(pdf_data_list)} files")
                     
-                    st.success(f"✅ {filename}: {len(file_results)} records extracted")
+                    st.success(f"Completed {filename}: {len(file_results)} records extracted")
                     
                 except Exception as e:
-                    st.error(f"❌ Error processing {filename}: {e}")
+                    st.error(f"Error processing {filename}: {e}")
         
         main_progress.empty()
         
-        # Final results
+        # Results
         total_time = time.time() - start_time
         
         if all_results:
             st.markdown("---")
-            st.subheader("🎯 Parallel Results")
+            st.subheader("Processing Results")
             
             # Performance metrics
             pages_per_second = total_pages_all / total_time if total_time > 0 else 0
-            sequential_time = total_pages_all * 3  # Assume 3 seconds per page sequentially
+            sequential_time = total_pages_all * 3
             speedup = sequential_time / total_time if total_time > 0 else 1
             
             col1, col2, col3, col4, col5 = st.columns(5)
             with col1:
-                st.metric("Files", len(pdf_data_list))
+                st.metric("Files Processed", len(pdf_data_list))
             with col2:
-                st.metric("Total Pages", total_pages_all)
+                st.metric("Pages Processed", total_pages_all)
             with col3:
-                st.metric("Total Records", len(all_results))
+                st.metric("Records Extracted", len(all_results))
             with col4:
-                st.metric("Total Time", f"{total_time:.1f}s")
+                st.metric("Processing Time", f"{total_time:.1f}s")
             with col5:
-                st.metric("Speed", f"{pages_per_second:.1f} pages/s")
+                st.metric("Processing Rate", f"{pages_per_second:.1f} pages/s")
             
-            # Performance comparison
+            # Performance summary
             st.success(f"""
-            🚀 **Ultra Parallel Performance**:
-            • **{speedup:.1f}x faster** than sequential processing
-            • Processed **{pages_per_second:.1f} pages per second**
-            • Saved approximately **{(sequential_time - total_time)/60:.1f} minutes**
+            **Processing Summary**:
+            • {speedup:.1f}x faster than sequential processing
+            • Average processing rate: {pages_per_second:.1f} pages per second
+            • Time saved: approximately {(sequential_time - total_time)/60:.1f} minutes
             """)
             
-            # Results dataframe
+            # Display results
             combined_df = pd.DataFrame(all_results)
             st.dataframe(combined_df, use_container_width=True)
             
-            # Download combined results
+            # Download results
             combined_csv = combined_df.to_csv(index=False).encode("utf-8")
             st.download_button(
-                "📥 Download All Results (Ultra Parallel CSV)", 
+                "Download Results (CSV)", 
                 data=combined_csv, 
-                file_name="ultra_parallel_extracted_invoices.csv"
+                file_name="invoice_extraction_results.csv"
             )
             
             # Quality analysis
-            with st.expander("📈 Quality Analysis"):
+            with st.expander("Quality Analysis"):
                 if 'extraction_quality' in combined_df.columns:
                     quality_counts = combined_df['extraction_quality'].str.lower().value_counts()
                     st.bar_chart(quality_counts)
                 else:
-                    st.info("Quality data not available in results")
+                    st.info("Quality metrics not available")
         else:
-            st.warning("⚠️ No data was extracted from any files")
+            st.warning("No data was extracted from the uploaded files")
 
 else:
-    st.info("📁 Upload PDF or Image files to begin extraction")
+    st.info("Please upload PDF or image files to begin processing")
     # st.markdown("""
-    # ### 🚀 Ultra Parallel Processing Capabilities:
+    # ### Invoice Extractor
     
-    # #### **Multi-Level Parallelism**:
-    # - 📄 **PDF Level**: Process up to 20 PDF files simultaneously
-    # - 📃 **Page Level**: Process up to 30 pages per PDF simultaneously  
-    # - 📦 **Batch Level**: Process up to 5 batches per PDF simultaneously
-    # - ⚡ **Total Concurrency**: Up to 3,000+ concurrent API calls
+    # **Features**:
+    # - **Multi-file processing**: Process multiple PDF and image files simultaneously
+    # - **Concurrent page processing**: Handle individual pages in parallel for faster extraction
+    # - **Batch processing**: Organize pages into batches for optimal performance
+    # - **Configurable settings**: Adjust processing parameters based on requirements
+    # - **Rate limit management**: Built-in controls to manage API usage
+    # - **Quality analysis**: Confidence scoring for extracted data
+    # - **CSV export**: Download results in structured format
     
-    # #### **Performance Benefits**:
-    # - 🎯 **10-50x faster** than sequential processing
-    # - 🚀 **Massive throughput**: 100+ pages per second possible
-    # - 🎛️ **Fully configurable**: Adjust workers based on API limits
-    # - 📊 **Real-time monitoring**: Track processing across all levels
+    # **Supported formats**: PDF, PNG, JPG, JPEG
     
-    # #### **Smart Features**:
-    # - 🛡️ **Rate limit protection**: Configurable delays
-    # - 🔄 **Automatic retry**: Failed pages are retried
-    # - 💾 **Memory efficient**: Batched processing prevents overload
-    # - 📈 **Performance metrics**: Detailed speed and efficiency tracking
-    
-    # **Perfect for**: Large document processing, bulk invoice extraction, enterprise workflows
+    # **Use cases**: Invoice processing, document digitization, data extraction workflows
     # """)
