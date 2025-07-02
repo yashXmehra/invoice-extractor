@@ -43,7 +43,7 @@ st.set_page_config(page_title="Invoice Extractor", layout="wide", initial_sideba
 st.title("📄 Invoice Extractor (PDF/Image to Structured CSV)")
 
 # Advanced Sidebar Configuration
-st.sidebar.header("🎛️ Ultra Parallel Settings")
+st.sidebar.header("🎛️ Parallel Settings")
 
 # File-level parallelism
 pdf_workers = st.sidebar.slider(
