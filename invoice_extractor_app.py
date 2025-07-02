@@ -39,8 +39,8 @@ st.markdown(hide_github_options, unsafe_allow_html=True)
 # Configuration
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-st.set_page_config(page_title="Ultra Parallel Invoice Extractor", layout="wide", initial_sidebar_state="expanded")
-st.title("🚀 Ultra Parallel Invoice Extractor")
+st.set_page_config(page_title="Invoice Extractor", layout="wide", initial_sidebar_state="expanded")
+st.title("📄 Invoice Extractor (PDF/Image to Structured CSV)")
 
 # Advanced Sidebar Configuration
 st.sidebar.header("🎛️ Ultra Parallel Settings")
@@ -380,26 +380,26 @@ if uploaded_files:
 
 else:
     st.info("📁 Upload PDF or Image files to begin ultra parallel extraction")
-    st.markdown("""
-    ### 🚀 Ultra Parallel Processing Capabilities:
+    # st.markdown("""
+    # ### 🚀 Ultra Parallel Processing Capabilities:
     
-    #### **Multi-Level Parallelism**:
-    - 📄 **PDF Level**: Process up to 20 PDF files simultaneously
-    - 📃 **Page Level**: Process up to 30 pages per PDF simultaneously  
-    - 📦 **Batch Level**: Process up to 5 batches per PDF simultaneously
-    - ⚡ **Total Concurrency**: Up to 3,000+ concurrent API calls
+    # #### **Multi-Level Parallelism**:
+    # - 📄 **PDF Level**: Process up to 20 PDF files simultaneously
+    # - 📃 **Page Level**: Process up to 30 pages per PDF simultaneously  
+    # - 📦 **Batch Level**: Process up to 5 batches per PDF simultaneously
+    # - ⚡ **Total Concurrency**: Up to 3,000+ concurrent API calls
     
-    #### **Performance Benefits**:
-    - 🎯 **10-50x faster** than sequential processing
-    - 🚀 **Massive throughput**: 100+ pages per second possible
-    - 🎛️ **Fully configurable**: Adjust workers based on API limits
-    - 📊 **Real-time monitoring**: Track processing across all levels
+    # #### **Performance Benefits**:
+    # - 🎯 **10-50x faster** than sequential processing
+    # - 🚀 **Massive throughput**: 100+ pages per second possible
+    # - 🎛️ **Fully configurable**: Adjust workers based on API limits
+    # - 📊 **Real-time monitoring**: Track processing across all levels
     
-    #### **Smart Features**:
-    - 🛡️ **Rate limit protection**: Configurable delays
-    - 🔄 **Automatic retry**: Failed pages are retried
-    - 💾 **Memory efficient**: Batched processing prevents overload
-    - 📈 **Performance metrics**: Detailed speed and efficiency tracking
+    # #### **Smart Features**:
+    # - 🛡️ **Rate limit protection**: Configurable delays
+    # - 🔄 **Automatic retry**: Failed pages are retried
+    # - 💾 **Memory efficient**: Batched processing prevents overload
+    # - 📈 **Performance metrics**: Detailed speed and efficiency tracking
     
-    **Perfect for**: Large document processing, bulk invoice extraction, enterprise workflows
-    """)
+    # **Perfect for**: Large document processing, bulk invoice extraction, enterprise workflows
+    # """)
