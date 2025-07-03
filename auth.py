@@ -117,15 +117,15 @@ class LoginUI:
         self.show_credentials_info()
     
     def show_credentials_info(self):
-        """Show login credentials for reference"""
-        with st.expander("🔍 Login Credentials"):
-            st.markdown(f"""
-            **Access Credentials:**
-            - **Username**: `{self.auth.USERNAME}`
-            - **Password**: `{self.auth.PASSWORD}`
-            
-            *Note: These credentials are for authorized access only.*
-            """)
+     """Show login help without revealing credentials"""
+    with st.expander("ℹ️ Login Help"):
+        st.markdown("""
+        **Access Information:**
+        - Contact your administrator for login credentials
+        - Ensure you have proper authorization to access this system
+        
+        *Note: This system is for authorized users only.*
+        """)
     
     def show_user_info(self):
         """Show user information in sidebar"""
