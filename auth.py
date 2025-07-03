@@ -113,19 +113,22 @@ class LoginUI:
                     else:
                         st.warning("⚠️ Please enter both username and password")
         
-        # Credentials info
-        self.show_credentials_info()
+        # Show help information without revealing credentials
+        self.show_help_info()
     
-    def show_credentials_info(self):
-     """Show login help without revealing credentials"""
-    with st.expander("ℹ️ Login Help"):
-        st.markdown("""
-        **Access Information:**
-        - Contact your administrator for login credentials
-        - Ensure you have proper authorization to access this system
-        
-        *Note: This system is for authorized users only.*
-        """)
+    def show_help_info(self):
+        """Show login help without revealing credentials"""
+        with st.expander("ℹ️ Login Help"):
+            st.markdown("""
+            **Access Information:**
+            - Contact your administrator for login credentials
+            - Ensure you have proper authorization to access this system
+            - This system is for authorized users only
+            
+            **Need Help?**
+            - Check with your system administrator
+            - Verify you have the correct access permissions
+            """)
     
     def show_user_info(self):
         """Show user information in sidebar"""
