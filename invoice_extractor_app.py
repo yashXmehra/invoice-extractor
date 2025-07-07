@@ -117,7 +117,7 @@ def main_app():
     [
       {
         "remitter_name": "", "invoice_number": "", "invoice_date": "",
-        "invoice_amount": "0.00", "discount_taken": "0.00", "payment_amount": "0.00",
+        "invoice_amount": "", "discount_taken": "", "payment_amount": "",
         "payment_date": "", "reference": "", "document_number": "", "company": "",
         "payment_method": "", "section_type": "", "extraction_quality": "", "notes": ""
       }
